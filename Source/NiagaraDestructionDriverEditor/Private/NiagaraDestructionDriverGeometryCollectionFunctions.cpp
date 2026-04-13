@@ -606,7 +606,7 @@ UNiagaraDestructionDriverDataAsset* UNiagaraDestructionDriverGeometryCollectionF
 	return nullptr;
 }
 
-UNiagaraDestructionDriverDataAsset* UNiagaraDestructionDriverGeometryCollectionFunctions::GeometryCollectionToNiagaraDestructible(UGeometryCollection* GeometryCollectionIn)
+UNiagaraDestructionDriverDataAsset* UNiagaraDestructionDriverGeometryCollectionFunctions::GeometryCollectionToNiagaraDestructible(UGeometryCollection* GeometryCollectionIn, TSubclassOf<ANiagaraDestructionDriverActor> ActorClass)
 {
 	check(GeometryCollectionIn);
 	
@@ -673,7 +673,7 @@ UNiagaraDestructionDriverDataAsset* UNiagaraDestructionDriverGeometryCollectionF
 	const FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 	AssetToolsModule.Get().CreateUniqueAssetName(FolderPath + TEXT("/BP_") + GeometryCollectionIn->GetName() + TEXT("_NDD"), TEXT(""), UniqueActorPackageName, UniqueActorAssetNameOut);
 	UBlueprintFactory* Factory = NewObject<UBlueprintFactory>();
-	Factory->ParentClass = ANiagaraDestructionDriverActor::StaticClass();
+	Factory->ParentClass = ActorClass;
 	UObject* CreatedAsset = AssetToolsModule.Get().CreateAsset(UniqueActorAssetNameOut, FolderPath, Factory->SupportedClass, Factory);
 	UBlueprint* Blueprint = Cast<UBlueprint>(CreatedAsset);
 	if (Blueprint)

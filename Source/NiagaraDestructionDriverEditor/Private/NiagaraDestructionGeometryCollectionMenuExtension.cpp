@@ -3,23 +3,69 @@
 #include "AssetToolsModule.h"
 #include "NiagaraDestructionDriverGeometryCollectionFunctions.h"
 #include "GeometryCollection/GeometryCollectionObject.h"
+#include "ClassViewerFilter.h"
+#include "NiagaraDestructionDriverEditorSettings.h"
+#include "Kismet2/SClassPickerDialog.h"
 
 #define LOCTEXT_NAMESPACE "FNiagaraDestructionDriverEditorModule"
 
 namespace NiagaraDestructionDriver::MenuExtension_GeometryCollection
 {
+    class FCreateNiagaraDestructibleAssetsClassFilter : public IClassViewerFilter
+	{
+	public:
+		FCreateNiagaraDestructibleAssetsClassFilter(UClass* InBaseClass)
+			: BaseClass(InBaseClass)
+			, RequiredClassFlags(CLASS_Abstract)
+			, DisallowedClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_HideDropDown)
+		{
+		}
+   
+		virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
+		{
+			if (InClass != nullptr)
+			{
+				return InClass->IsChildOf(BaseClass) && !InClass->HasAnyClassFlags(DisallowedClassFlags) && InClass->HasAnyClassFlags(RequiredClassFlags);
+			}
+			return false;
+		}
+   
+		virtual bool IsUnloadedClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const TSharedRef<const IUnloadedBlueprintData> InUnloadedClassData, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
+		{
+			return InUnloadedClassData->IsChildOf(BaseClass) && !InUnloadedClassData->HasAnyClassFlags(DisallowedClassFlags) && InUnloadedClassData->HasAnyClassFlags(RequiredClassFlags);
+		}
+   
+	private:
+		UClass* BaseClass;
+   
+		EClassFlags RequiredClassFlags;
+		EClassFlags DisallowedClassFlags;
+	};
+
 	static void ExecuteCreateNiagaraDestructionAssets(const FToolMenuContext& InContext)
 	{
 		if (const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InContext))
 		{
-			TArray<UGeometryCollection*> GeometryCollections = Context->LoadSelectedObjects<UGeometryCollection>();
-			if (!GeometryCollections.IsEmpty())
+			const FText TitleText = LOCTEXT("CreateNiagaraDestructionAssets_PickActorClass", "Pick Niagara Destruction Driver Actor Class");
+	
+			FClassViewerInitializationOptions Options;
+			Options.ClassFilters.Add(MakeShared<FCreateNiagaraDestructibleAssetsClassFilter>(ANiagaraDestructionDriverActor::StaticClass()));
+			Options.InitiallySelectedClass = GetDefault<UNiagaraDestructionDriverEditorSettings>()->DefaultDestructionDriverActorClass.LoadSynchronous();
+	
+			UClass* PickedClass = nullptr;
+			const bool bPressedOk = SClassPickerDialog::PickClass(TitleText, Options, OUT PickedClass, ANiagaraDestructionDriverActor::StaticClass());
+			
+			if (bPressedOk && PickedClass != nullptr)
 			{
-				for (UGeometryCollection* GeometryCollection : GeometryCollections)
+				TArray<UGeometryCollection*> GeometryCollections = Context->LoadSelectedObjects<UGeometryCollection>();
+				if (!GeometryCollections.IsEmpty())
 				{
-					if (GeometryCollection)
+					for (UGeometryCollection* GeometryCollection : GeometryCollections)
 					{
-						UNiagaraDestructionDriverGeometryCollectionFunctions::GeometryCollectionToNiagaraDestructible(GeometryCollection);
+						if (GeometryCollection)
+						{
+							UNiagaraDestructionDriverGeometryCollectionFunctions::GeometryCollectionToNiagaraDestructible(GeometryCollection, PickedClass);
+						}
 					}
 				}
 			}

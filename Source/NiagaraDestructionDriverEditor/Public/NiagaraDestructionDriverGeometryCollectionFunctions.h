@@ -7,6 +7,7 @@
 #include "NiagaraDestructionDriverGeometryCollectionFunctions.generated.h"
 
 
+class ANiagaraDestructionDriverActor;
 class UTexture2D;
 class UStaticMesh;
 class UNiagaraDestructionDriverDataAsset;
@@ -45,10 +46,11 @@ public:
 	 * @brief Generates niagara destructible assets for a given geometry collection.
 	 * @note This creates and save new uassets in the editor.
 	 * @param GeometryCollectionIn the geometry collection we want to process into a niagara driven destructible
+	 * @param ActorClass the base class of the generated actor
 	 * @return the data asset that holds references to all the generated assets
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Geometry Collection Processing")
-	static UNiagaraDestructionDriverDataAsset* GeometryCollectionToNiagaraDestructible(UGeometryCollection* GeometryCollectionIn);
+	static UNiagaraDestructionDriverDataAsset* GeometryCollectionToNiagaraDestructible(UGeometryCollection* GeometryCollectionIn, TSubclassOf<ANiagaraDestructionDriverActor> ActorClass);
 
 	
 	/**

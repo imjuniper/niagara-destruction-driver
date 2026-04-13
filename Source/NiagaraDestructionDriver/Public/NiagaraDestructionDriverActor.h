@@ -13,7 +13,7 @@
  * - provides force input to the underlying particle system for niagara destruction.
  * @brief Holds niagara destructible assets and drives destruction.
  */
-UCLASS()
+UCLASS(Abstract)
 class NIAGARADESTRUCTIONDRIVER_API ANiagaraDestructionDriverActor : public AActor
 {
 	GENERATED_BODY()
